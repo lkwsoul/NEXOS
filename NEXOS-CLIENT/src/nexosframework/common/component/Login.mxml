@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--######################################################################
+Title       : 로그인 Component.
+Size        : 316 * 218 -> 501 * 303
+Author      : Lee Kyung-woo
+Date        : 2008-03-07
+Description
+ 로그인하는 component
+==========================================================================
+
+Update History
+==========================================================================
+Date.       Author.         Description.
+==========================================================================
+2008-02-29  Lee Kyung-woo   최초작성.
+##########################################################################-->
+<mx:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+          xmlns:s="library://ns.adobe.com/flex/spark" 
+          xmlns:mx="library://ns.adobe.com/flex/mx" 
+          xmlns:flexlib="flexlib.controls.*"
+          creationComplete="_initComponent()"
+          initialize="_initialize()"
+          remove="_removeHandler(event)"
+          styleName="LoginPanel"
+          layout="absolute"
+          width="501" height="303"
+          implements="nexosframework.common.service.ServiceReceiver"
+  >
+  <fx:Script>
+    <![CDATA[
+      import mx.controls.Alert;
+      import mx.events.FlexEvent;
+      import mx.events.ValidationResultEvent;
+      import mx.managers.PopUpManager;
+      import mx.validators.Validator;
+      
+      import nexosframework.common.Cookie;
+      import nexosframework.common.Session;
+      import nexosframework.common.service.Service;
+      import nexosframework.common.service.ServiceFault;
+      import nexosframework.common.service.ServiceResult;
+      import nexosframework.common.service.ServiceRunner;
+      import nexosframework.service.wc.WCServiceImpl;
+      /**
+      * 창제목
+      */
+      public var formTitle:String = "";
+
+      public var login_ok:Boolean;
+      
+      /*
+      [Bindable]
+      private var _loginEnable:Boolean = false;
+      */
+      
+      //Validation 여부.(false라면 validation 체크 실패, true라면 성공)
+      [Bindable]
+      public var formIsValid:Boolean = false;
+  
+      //Validation의 empty여부.
+      [Bindable]
+      public var formIsEmpty:Boolean = true;
+      
+      //EmptyID
+      public var empty_id:String = null;
+      
+      private var focussedFormControl:DisplayObject;
+      
+      /**
+      * 초기화
+      */
+      private function _initialize():void {
+      }
+      
+      /**
+      * Login Component 초기화.
+      */
+      private function _initComponent():void{
+        this.title=formTitle;
+        //Cookie체크 부분.
+        var strUserID_fromCookie:String = Cookie.getCookie("USER_ID") as String;
+        if(strUserID_fromCookie!=null && strUserID_fromCookie!=""){
+          USER_ID.text = strUserID_fromCookie;
+          chkSave.selected = true;
+          focusManager.setFocus(USER_PWD);
+          return;
+        }
+        
+        resetFocus();
+      }
+
+      /**
+       * 로그인 function.
+       */
+      public function login():void{
+        if(chkSave.selected) {
+          Cookie.setCookie("USER_ID" ,USER_ID.text);
+        } else {
+          Cookie.setCookie("USER_ID" ,"");
+        }
+        
+        //서비스 생성
+        var service:Service       = new WCServiceImpl();
+        //매소드처리 타입
+        service.methodName        = WCServiceImpl.GET_LOGIN; 
+        //파라메터 세팅
+        var objMap:Object         = new Object(); 
+        objMap["P_USER_ID"]       = USER_ID.text;
+        objMap["P_USER_PWD"]      = USER_PWD.text;
+        service.map               = objMap;
+        //되돌려 받을 화면설정
+        service.view              = this;
+        
+        //서비스 실행한다 
+        ServiceRunner.service     = service;
+        ServiceRunner.call();
+      }
+
+      //########################################################################
+      // ServiceReceiver 구현 부분 - 시작
+      /**
+      * RPC 실패시
+      * @param ServiceFault
+      */
+      public function serviceFaultHandler(fault:ServiceFault):void {
+        var strFaultString:String = fault.message;
+        switch(fault.destination) {
+          case WCServiceImpl.DESTINATION:
+            Alert.show(strFaultString, "[로그인에러]");
+            break;
+        }
+      }
+      
+      /**
+      * RPC 성공시
+      * @param ServiceResult 처리 결과를  resultArrayCollection, resultMap, resultString...등으로 결과를 받을 수 있습니다.
+      */
+      public function serviceResultHandler(result:ServiceResult):void {
+        switch(result.destination) {
+          case WCServiceImpl.DESTINATION:
+            //로그인 정보를 Session변수에 세팅한다
+            Session.setValues(result.resultArrayCollection);
+            mx.core.FlexGlobals.topLevelApplication.initLoginAfter();
+            //Popup창을 삭제하기 이전에 /servlet으로 로그인하는 로직 호출하도록 합니다.
+            //ExternalInterface.call("login", USER_ID.text, USER_PWD.text);
+            break;
+        }
+      }
+      // ServiceReceiver 구현 부분 - 종료
+      //########################################################################
+      
+      /**
+      * 로그인 컴포넌트 삭제시
+      */
+      private function _removeHandler(event:FlexEvent):void {
+      }
+      
+      /**
+      * 로그인 버튼 활성화 여부 체크하기
+      */
+      private function checkEnabledBtnLogin():void {
+        if(USER_ID.text!="" && USER_PWD.text!=""){
+          btnLogin.enabled = true;
+        }else{
+          btnLogin.enabled = false;
+        }
+      }
+      
+      /**
+      * Enter Key Event처리 Function.(USER_ID)
+      */
+      private function checkEnterKey(event : KeyboardEvent):void{
+        //버튼 활성화여부 체크
+        checkEnabledBtnLogin();
+        if(event.keyCode==Keyboard.ENTER && USER_ID!=null && USER_ID.text!=""){
+          //focusManager.getNextFocusManagerComponent(false).setFocus();
+          USER_PWD.setFocus();
+        }
+      }
+      
+      /**
+      * Enter Key Event처리 Function.(USER_PWD)
+      */
+      private function checkEnterKey_PWD(event : KeyboardEvent):void{
+        //버튼 활성화여부 체크
+        checkEnabledBtnLogin();
+        
+        if(event.keyCode==Keyboard.ENTER){
+          if(btnLogin.enabled){
+            this.login();
+          }
+        }
+      }
+      
+      /**
+      * 로그인 버튼 Event처리 Function.
+      */
+      private function login_keyDown(event : KeyboardEvent):void{
+        if(event.keyCode==Keyboard.ENTER){
+          this.login();
+        }
+      }
+      
+      /**
+      * Validation 체크 로직
+      */
+      private function validateForm(event:Event):void {                    
+        focussedFormControl = event.target as DisplayObject;    
+  
+        // 기본값 설정.                
+        formIsValid = true;            
+  
+        // empty체크.
+        formIsEmpty = (USER_ID.text == "" && USER_PWD.text == ""); 
+        
+        // Empty ID를 넣어 줍니다.
+        if(USER_ID.text == ""){
+          this.empty_id = USER_ID.id;
+        }else if(USER_PWD.text == ""){
+          this.empty_id = USER_PWD.id;
+        }
+          
+  
+        //모든 validate를 체그하도록 합니다.
+        validate(vldrUser_id);                
+        validate(vldrUser_pwd);
+      }
+     
+      /**
+      * 해당 validator에 대한 validation체크하기.
+      */ 
+      private function validate(validator:Validator):Boolean{                
+        var validatorSource:DisplayObject = validator.source as DisplayObject;
+        var suppressEvents:Boolean = (validatorSource != focussedFormControl);
+        var event:ValidationResultEvent = validator.validate(null, suppressEvents); 
+
+        var currentControlIsValid:Boolean = (event.type == ValidationResultEvent.VALID);
+         
+        // validation 체크여부
+        formIsValid = formIsValid && currentControlIsValid;
+         
+        return currentControlIsValid;
+      }
+                
+      /**
+      * Focus를 초기화 합니다.
+      */
+      private function resetFocus():void{
+        focusManager.setFocus(USER_ID);
+      }
+    ]]>
+  </fx:Script>
+  
+  <fx:Declarations>
+    <mx:StringValidator id="vldrUser_id"  source="{USER_ID}"  property="text" maxLength="10"  required="true" requiredFieldError="사용ID를 입력해주세요" />
+    <mx:StringValidator id="vldrUser_pwd" source="{USER_PWD}" property="text" required="true"                 requiredFieldError="사용자암호를 입력해주세요"/>
+  </fx:Declarations>
+  
+  <s:HGroup verticalAlign="middle" horizontalAlign="left" x="60" y="152" gap="1">
+    <s:VGroup id="vGLogin" gap="3" paddingRight="2" paddingLeft="0" paddingTop="0">
+      <s:HGroup id="userId">
+        <flexlib:PromptingTextInput id="USER_ID" width="166" text="" maxChars="10" prompt="사용자ID"
+          keyDown="{checkEnterKey(event)}" change="{validateForm(event)}" styleName="LoginInput"/>
+      </s:HGroup>
+      <s:HGroup id="userPw">
+        <flexlib:PromptingTextInput id="USER_PWD" width="166" text="" displayAsPassword="true" maxChars="10" prompt="사용자암호" 
+          keyDown="{checkEnterKey_PWD(event)}" change="{validateForm(event)}" styleName="LoginInput"/>
+      </s:HGroup>
+      <s:HGroup visible="true">
+        <s:CheckBox id="chkSave" label="사용자ID 저장" styleName="LoginInputSpark"/>
+      </s:HGroup>
+    </s:VGroup>
+    <s:VGroup height="100%" paddingTop="0" paddingBottom="0" paddingLeft="0" paddingRight="0" verticalAlign="top">
+      <mx:Button id="btnLogin" label="LOGIN" click="{login()}" keyDown="{login_keyDown(event)}" styleName="LoginBtn" buttonMode="true"/>
+    </s:VGroup>
+  </s:HGroup>
+</mx:Panel>

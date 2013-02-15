@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+               xmlns:s="library://ns.adobe.com/flex/spark" 
+               xmlns:mx="library://ns.adobe.com/flex/mx"
+               xmlns:common="nexosframework.common.*"
+               xmlns:component="nexosframework.common.component.*"
+               xmlns:flexmdi="flexlib.mdi.containers.*"
+               width="100%" height="100%"
+               skinClass="assets.skin.MainSkin"
+               creationComplete="_initApp()"
+               >
+  <s:layout>
+    <s:BasicLayout/>
+  </s:layout>
+  <fx:Style source="/assets/css/Main.css"  />
+  <!-- 메인 Application State선언부분 -->
+  <s:states>
+    <s:State name="default"/>
+    <s:State name="programLoading"/>
+  </s:states>
+  <fx:Declarations>
+    <!-- Effect -->
+    <mx:Glow    id="glow" duration="500"
+                alphaFrom="1.0" alphaTo="0.5"
+                blurXFrom="0.0" blurXTo="8.0"
+                blurYFrom="0.0" blurYTo="8.0"
+                color="0x000080"/>
+    <mx:Glow    id="unglow" duration="500"
+                alphaFrom="0.5" alphaTo="0.0"
+                blurXFrom="8.0" blurXTo="0.0"
+                blurYFrom="8.0" blurYTo="0.0"
+                color="0x000080"/>
+    <mx:Fade    id="fadeVisible" duration="2000"
+                alphaFrom="0.0"   alphaTo="1.0"/>
+    <mx:Fade    id="fadeUnVisible" duration="2000"
+                alphaFrom="1.0"   alphaTo="0.0"/>
+    <mx:Resize  id="resize"      duration="1000"/>
+    <!-- FABridge 설정 -->
+    <!-- 이 부분은 Javascript에서 Flex쪽 통신을 하기 위한 선업부분 -->
+    <common:FABridge bridgeName="wmsMain"/>  
+  </fx:Declarations>
+  <fx:Script source="Main.as"              />
+  <fx:Script>
+    <![CDATA[
+      /*
+      import mx.controls.Alert;
+      import mx.events.FlexEvent;
+      import mx.rpc.events.FaultEvent;
+      import mx.rpc.events.InvokeEvent;
+      import mx.rpc.events.ResultEvent;
+      import mx.rpc.remoting.RemoteObject;
+      
+      private var ro:RemoteObject = new RemoteObject();
+      
+      private function button1_clickHandler(event:MouseEvent):void{
+        //ro.sayHello(txtName.text);
+      }
+      
+      private function faultHandler(event:FaultEvent):void {
+        Alert.show(event.fault.toString(), "[실패]");
+      }
+      
+      private function resultHandler(event:ResultEvent):void {
+        Alert.show(event.result.toString(), "[성공]");
+      }
+      
+      private function invokeHandler(event:InvokeEvent):void {
+        event.
+      }
+      
+      private function application1_creationCompleteHandler(event:FlexEvent):void{
+        ro.destination = "HelloFlexService";
+        ro.addEventListener(FaultEvent.FAULT      , faultHandler);
+        ro.addEventListener(ResultEvent.RESULT    , resultHandler);
+        
+        ro.addEventListener(InvokeEvent.INVOKE    , invokeHandler);
+        ro.showBusyCursor = true;
+      }
+      */
+    ]]>
+  </fx:Script>
+  <s:VGroup id="vgMain" horizontalAlign="left" width="100%" height="100%" gap="0" enabled="true" enabled.default="true" enabled.programLoading="false">
+    <!--
+    <mx:HBox verticalAlign="middle" width="100%" height="40" verticalGap="0" horizontalScrollPolicy="off" verticalScrollPolicy="off" paddingTop="0" styleName="acbTop">
+    -->
+    <s:SkinnableContainer width="100%" height="40">
+      <s:Rect left="0" right="0" top="0" bottom="0">
+        <s:fill>
+          <s:SolidColor color="0xE6E6E6" />
+        </s:fill>
+      </s:Rect>
+      
+      <s:HGroup verticalAlign="middle" width="100%" height="40" gap="2">
+        <!-- CI -->
+        <s:HGroup verticalAlign="middle" height="100%">
+          <s:BitmapImage id="imgCI" source="{_imgCI_brokenImageSkin}"/>
+        </s:HGroup>
+        
+        <s:HGroup verticalAlign="middle" horizontalAlign="right" width="100%">
+          
+          <!-- 엑셀 다운로드시 표시될 프로그래스바 -->
+          <s:HGroup id="hgPBTop" width="0" height="100%" verticalAlign="middle">
+            <mx:ProgressBar id="pbTop" width="100%" visible="false" mode="manual" styleName="topProgressBar"/>  
+          </s:HGroup>
+          
+          <!-- 상단 기능버튼 -->
+          <s:HGroup id="hbFunctionButton" verticalAlign="middle" gap="0">
+            
+            <s:Button id="btnInquiry"        toolTip="조회"        click="{clickBtnInquiry(event)}"           doubleClickEnabled="true" buttonMode="true" skinClass="assets.skin.TopInquieryButtonSkin"/>
+            <s:HGroup width="49" height="100%" gap="0" verticalAlign="bottom">
+              <s:Label  id="lblInquiry"        text="조회"  click="{clickBtnInquiry(event)}"/>
+            </s:HGroup>
+            
+            <s:Button id="btnNew"            toolTip="신규"        click="{clickBtnNew(event)}"               doubleClickEnabled="true" buttonMode="true" skinClass="assets.skin.TopNewButtonSkin"/>
+            <s:HGroup width="40" height="100%" gap="0" verticalAlign="bottom">
+              <s:Label  id="lblNew"            text="신규"    click="{clickBtnNew(event)}"/>
+            </s:HGroup>
+            
+            <s:Button id="btnSave"           toolTip="저장"        click="{clickBtnSave(event)}"              doubleClickEnabled="true" buttonMode="true" skinClass="assets.skin.TopSaveButtonSkin"/>
+            <s:HGroup width="44" height="100%" gap="0" verticalAlign="bottom">
+              <s:Label  id="lblSave"           text="저장"   click="{clickBtnSave(event)}"/>
+            </s:HGroup>
+            
+            <s:Button id="btnCancel"         toolTip="취소"        click="{clickBtnCancel(event)}"            doubleClickEnabled="true" buttonMode="true" skinClass="assets.skin.TopCancelButtonSkin"/>
+            <s:HGroup width="43" height="100%" gap="0" verticalAlign="bottom">
+              <s:Label  id="lblCancel"         text="초기화" click="{clickBtnCancel(event)}"/>
+            </s:HGroup>
+            
+            <s:Button id="btnDelete"         toolTip="삭제"        click="{clickBtnDelete(event)}"            doubleClickEnabled="true" buttonMode="true" skinClass="assets.skin.TopDeleteButtonSkin"/>
+            <s:HGroup width="50" height="100%" gap="0" verticalAlign="bottom">
+              <s:Label  id="lblDelete"         text="삭제" click="{clickBtnDelete(event)}"/>
+            </s:HGroup>
+            
+            <s:Button id="btnExcel"          toolTip="엑셀"        click="{clickExcelExport(event)}"          doubleClickEnabled="true" buttonMode="true" skinClass="assets.skin.TopExcelButtonSkin"/>
+            <s:HGroup width="43" height="100%" gap="0" verticalAlign="bottom">
+              <s:Label  id="lblExcel"          text="엑셀"  click="{clickExcelExport(event)}"/>
+            </s:HGroup>
+            
+            <s:Button id="btnMenu"           toolTip="메뉴"        click="{clickMenu(event)}"                 doubleClickEnabled="true" buttonMode="true" skinClass="assets.skin.TopMenuButtonSkin"/>
+            <s:HGroup height="100%"            gap="0" verticalAlign="bottom">
+              <s:Label  id="lblMenu"           text="메뉴"   click="{clickMenu(event)}"/>
+            </s:HGroup>
+            
+          </s:HGroup>
+          
+        </s:HGroup>
+        
+        <!-- 출력물 ComboBox -->
+        <s:Group id="hbExtFunction" width="0" showEffect="{fadeVisible}" visible="false" >
+          <mx:PopUpButton id="popBtnPrint" width="100%" popUp="{printMenu}" textAlign="left"
+                          focusInEffect="glow"  focusOutEffect="unglow"  toolTip="출력버튼" focusThickness="0" close="{popBtnPrintClose(event)}" resizeEffect="resize" minWidth="0"/>
+        </s:Group>
+        
+        <!-- LogOut버튼 -->
+        <s:HGroup id="hbLogout" verticalAlign="middle" paddingTop="0" gap="3" paddingLeft="9" >
+          <s:Label id="txtLoginUserNm" />
+          <s:Button    id="btnClose"       click="{clickClose()}" buttonMode="true" skinClass="assets.skin.TopCloseButtonSkin" width="54" height="22"/>
+          <component:Logout  id="btnLogOut"     buttonMode="true"/>
+        </s:HGroup>
+        
+      </s:HGroup>
+      
+    </s:SkinnableContainer>
+    
+    <!-- Top Div -->
+    <s:Rect width="100%" height="4">
+      <s:fill>
+        <s:SolidColor color="0xD98F00" alpha="1" />
+      </s:fill>
+    </s:Rect>
+    
+    <mx:HDividedBox id="hdivLeft" width="100%" height="100%" horizontalGap="1">
+      <!-- Left Menu -->
+      <component:LeftMenu id="leftMenu" titleWindowsTitle="메뉴" height="100%" width="0"/>  
+      <!-- MDI Canvas --> 
+      <flexmdi:MDICanvas id="canvas_main" width="100%" height="100%" horizontalScrollPolicy="off" verticalScrollPolicy="off" backgroundColor="#8A8A8A"/>
+    </mx:HDividedBox>
+    
+    <!-- Bottom Div -->
+    <s:Rect width="100%" height="4">
+      <s:fill>
+        <s:SolidColor color="0xD98F00" alpha="1" />
+      </s:fill>
+    </s:Rect>
+  </s:VGroup>
+  <!-- 깜빡거리는 현상방지 -->
+  <!--
+  <common:GroupPanel width="0" height="0">
+    <common:view>
+      <mx:HBox width="0" height="0">
+        <s:ComboBox/>
+        <s:TextArea/>
+        <s:TextInput/>
+        <s:ButtonBar/>
+        <s:DataGrid/>
+        <mx:DateField/>
+        <mx:FormItem/>
+      </mx:HBox>
+    </common:view>
+  </common:GroupPanel>
+  -->
+</s:Application>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" 
+           xmlns:s="library://ns.adobe.com/flex/spark" 
+           xmlns:mx="library://ns.adobe.com/flex/mx"
+           verticalScrollPolicy="off" horizontalScrollPolicy="off">
+	<fx:Script>
+		<![CDATA[
+			private function goToURL(urlStr:String):void{
+				var webPageURL:URLRequest = new URLRequest( urlStr );
+				navigateToURL(webPageURL, '_blank');
+			}
+		]]>
+	</fx:Script>
+	<mx:LinkButton label="{data.title}" click="goToURL(data.link)"/>
+</mx:Canvas>

@@ -1,0 +1,850 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+////////////////////////////////////////////////////////////////////////////////
+//
+// *Copyright (c) 2006 Uday M. Shankar
+//
+// The usual Yada-Yada!
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this code and associated documentation
+// files (the "Code"), to deal in the Code without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Code is furnished to do so, subject to the following
+// conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Code.
+//
+// THE CODE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+//
+// Further it is worth to mention that no animals have been 
+// harmed during the development. No trees have been cut 
+// down. Womens rights have been treated with full respect.
+// Mankind's safety has been ensured at every step.
+//
+// Peace!
+//
+// @file: CGrid
+// @date: 23-12-2006
+// @description: CGrid component, A wrapper over the DataGrid.
+//
+////////////////////////////////////////////////////////////////////////////////
+-->
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+          xmlns:s="library://ns.adobe.com/flex/spark" 
+          xmlns:mx="library://ns.adobe.com/flex/mx"
+          xmlns:grid="flexed.widgets.grid.*"
+          xmlns:flexlib="flexlib.controls.*"
+          width="100%"
+          height="100%"
+          gap="2"
+          creationComplete="initView()"
+          contentBackgroundColor="#FFFFFF"
+          paddingLeft="3" paddingRight="3" paddingTop="3" paddingBottom="3"
+          visible="false"
+          remove="{_removeHandler(event)}"
+  >
+  <fx:Script>
+  <![CDATA[
+    import com.asetec.common.ConstClass;
+    /*
+    * 2012-10-05
+    * 이경우
+    * 소스 정리(다국어 미처리)로 주석처리
+    import com.asetec.common.ResourceData;
+    */
+    import com.asetec.common.components.DataGridColumnCheckBox;
+    
+    import mx.binding.utils.BindingUtils;
+    import mx.collections.ArrayCollection;
+    import mx.containers.TitleWindow;
+    import mx.controls.Alert;
+    import mx.controls.CheckBox;
+    import mx.controls.Image;
+    import mx.controls.dataGridClasses.DataGridColumn;
+    import mx.events.CloseEvent;
+    import mx.events.DataGridEvent;
+    import mx.events.FlexEvent;
+    import mx.events.ListEvent;
+    import mx.managers.PopUpManager;
+    import mx.printing.FlexPrintJob;
+  
+    public var colinfo:Array = new Array();
+    public var gridColumns:ArrayCollection = new ArrayCollection();
+    public var columnToSort:String;
+    
+    private var colDataNames:Array = new Array();
+    private var Hits:Array = new Array();
+    private var gridData:ArrayCollection=new ArrayCollection();
+
+    public static var popupColumns:TitleWindow = null;
+    
+    [Bindable]
+    public var gotData:int = 0;
+    [Bindable]
+    public var shownData:int = 0;
+    [Bindable]
+    public var printTitle:String = "";
+    [Bindable]
+    public var searchType:String = "filter";
+    [Bindable]
+    public var allowColumnSelection:Boolean = true;
+    [Bindable]
+    public var allowCopyToClipboard:Boolean = true;
+    [Bindable]
+    public var allowPrint:Boolean = true;
+    
+    [Embed(source="print.gif")]
+    [Bindable]
+    public var icoPrint:Class;  
+    
+    [Embed(source="columns.gif")]
+    [Bindable]
+    public var icoColumns:Class;
+
+    [Embed(source="copy.gif")]
+    [Bindable]
+    public var icoCopy:Class;
+    
+    [Embed(source="reload.png")]
+    [Bindable]
+    public var reloadTotal:Class;
+    
+    
+    private var _isCheckBox:Boolean = false;
+    /**
+    * 체크박스 사용 여부(멀티선택여부)
+    */
+    public function set isCheckBox(value:Boolean):void {
+      _isCheckBox = value;  
+    }
+    public function get isCheckBox():Boolean {
+      return _isCheckBox;  
+    }
+    
+    //호출한 Object
+    public var _parent:Object;
+    
+    public var visibleSearch:Boolean = true;
+        
+    /**
+    * Initializes the grid component
+    */      
+    private function initView():void{
+      //검색을 보이기/숨기기 세팅.
+      this.searchPanel.visible = visibleSearch;
+      if(!visibleSearch)
+        this.searchPanel.height = 0;
+      
+      loadData(gridData);
+      prepareGrid();
+      
+      //첫번재 row를 선택하도록 합니다.
+      var listevent:ListEvent = new ListEvent(ListEvent.ITEM_CLICK);
+      listevent.rowIndex=0;
+      setItemclick(listevent);
+      /*
+      * 2012-10-05
+      * 이경우
+      * 소스 정리(다국어 미처리)로 주석처리
+      initResource();
+      */
+      visible = true;
+    }
+    
+    /**
+    * 종료시 Event
+    */
+    private function _removeHandler(event:FlexEvent):void {
+      _parent = null;
+    }
+
+    /**
+    * Prepares the grid
+    */
+    private function prepareGrid():void {
+      BindingUtils.bindSetter(allowGridColChoice,this,"allowColumnSelection");
+      BindingUtils.bindSetter(allowGridCopy,this,"allowCopyToClipboard");
+      BindingUtils.bindSetter(allowGridPrint,this,"allowPrint");
+      
+    }
+
+    /**
+    * Shows/Hides Column Choice Button
+    * @param choice : choice of hide-show state passed from caller.
+    */
+      private function allowGridColChoice(choice:Boolean):void {
+        if(choice == false){
+          columnsButton.width = 0;
+          columnsButton.visible = false;
+        }
+      }
+
+    /**
+    * Shows/Hides Copy Button
+    * @param choice : choice of hide-show state passed from caller.
+    */
+      private function allowGridCopy(choice:Boolean):void {
+        if(choice == false){
+          copyButton.width = 0;
+          copyButton.visible = false;
+        }
+      }
+
+    /**
+    * Shows/Hides Print Button
+    * @param choice : choice of hide-show state passed from caller.
+    */
+      private function allowGridPrint(choice:Boolean):void {
+        if(choice == false){
+          printButton.width = 0;
+          printButton.visible = false;
+        }
+      }
+          
+    /**
+    * Updates the total records shown text
+    */
+      private function shownRecords(value:int=0):void {
+        shownData = gridData.length;
+        gotData = gridData.source.length;
+
+        //현재선택한 row index / 현재 grid의 데이터수로 표시 수정.
+        var listevent:ListEvent = new ListEvent(ListEvent.ITEM_CLICK);
+        listevent.rowIndex=0;
+        setItemclick(listevent);
+
+        /*
+        if(shownData!=gotData) {
+          lblDataInfo.text="| "+shownData+" of "+gotData+" rows retrieved |"          
+        } else {
+          lblDataInfo.text="| "+gotData+" rows retrieved |"
+        }
+        */
+      }
+    
+    /**
+    * Draws the columns of the grid.
+    *
+    * @param cols : The ArrayCollection of column specifications.
+    */    
+    public function drawColumns(cols:ArrayCollection):void{
+      //Column 초기화
+      colinfo = new Array();
+      
+      //체크박스를 처음컬럼에 추가한다.
+      createCheckBox();
+      //var colPreferences:Array = Preferences.getInstance.getGridPreference(this.id.toLowerCase());
+      for(var i:int;i<cols.length;i++){
+        var column:DataGridColumn = new DataGridColumn();
+        column.headerText = cols[i].colname;
+        column.dataField = cols[i].coldata;
+        
+        //aligning contents of the column
+        if (cols[i].align != "" && cols[i].align != null ) {
+          column.setStyle("textAlign",cols[i].align);
+        }
+        //disabling (or enabling) sorting on columns
+        if (cols[i].sortable != "" && cols[i].sortable != null && cols[i].sortable == "false" ) {
+          column.sortable = false;
+        }
+        //setting a function for manipulating the data in some columns
+        if (cols[i].labelfunction != "" && cols[i].labelfunction != null) {
+          column.labelFunction = cols[i].labelfunction;
+        }
+        //setting custom itemrenderer
+        if (cols[i].renderer != "" && cols[i].renderer != null ) {
+          column.itemRenderer = new ClassFactory(cols[i].renderer);
+        }
+        /*
+        //Preferences 기능 주석처리 불안전하여...^^
+        if(colPreferences != null){
+          for(var j:int=0;j<colPreferences.length;j++){
+            if(cols[i].coldata == colPreferences[j].dataField){
+              column.width = colPreferences[j].width;
+              column.visible = colPreferences[j].visible;
+              column.sortDescending = colPreferences[j].sortDescending;
+              break;
+            }
+          }
+        }else{
+          if(cols[i].colwidth && cols[i].colwidth!=0){
+            column.width = cols[i].colwidth;          
+          }
+          if (cols[i].hide != "" && cols[i].hide != null && cols[i].hide == true) {
+            column.visible = false;
+          }
+        }
+        */
+        if(cols[i].colwidth && cols[i].colwidth!=0){
+          column.width = cols[i].colwidth;          
+        }
+        if (cols[i].hide != "" && cols[i].hide != null && cols[i].hide == true) {
+          column.visible = false;
+        }
+        column.sortCompareFunction = sortColumns;
+        column.headerWordWrap = true;
+        colDataNames.push(cols[i].coldata);
+        colinfo.push(column);
+      }
+      dataGrid.columns = colinfo;
+      dataGrid.addEventListener(DataGridEvent.COLUMN_STRETCH, setColumnChoice);
+      gridColumns = cols;
+    }
+    
+    /**
+    * 체크박스 넣기
+    */
+    private function createCheckBox():void {
+      if(!isCheckBox)
+        return;
+      var columnCheckBox:DataGridColumnCheckBox = new DataGridColumnCheckBox();
+      columnCheckBox.width            = 20;
+      columnCheckBox.visible          = true;
+      columnCheckBox.dataField        = "CHK";
+      columnCheckBox.headerText       = "";
+      columnCheckBox.editable         = false;
+      columnCheckBox.viewCheckAll     = true;
+      columnCheckBox.setStyle("textAlign" ,"center");
+      columnCheckBox.checkedValue     = "Y";
+      columnCheckBox.unCheckedValue   = "N";
+      //컬럼명배열에 값넣기
+      colDataNames.push("");
+      colinfo.push(columnCheckBox);
+    }
+    
+    /**
+    * Executes on headerRelease to know 
+    * the column to sort.
+    *
+    * @param obj1 Object to compare
+    * @param obj2 Object to compare obj1 with.
+    */      
+    private function sortHeader(event:DataGridEvent):void {
+        columnToSort = event.dataField;
+        setColumnChoice();
+    }
+    
+    /**
+    * Sorts the text fields in an case-insensitive mode and sorts the number fields  
+    * with correct numeric sort.
+    *
+    * @param obj1 Object to compare
+    * @param obj2 Object to compare obj1 with.
+    */      
+    private function sortColumns(obj1:Object, obj2:Object):int{
+      var i:int = 0;
+      if(obj1[columnToSort] != null && obj2[columnToSort] != null){ //checking for null
+        if((Number)(obj1[columnToSort]) && (Number)(obj2[columnToSort])){ //checking for number
+          var nval1:Number = obj1[columnToSort];
+          var nval2:Number = obj2[columnToSort];
+
+          if (nval1 < nval2) {
+            i = -1;
+          } else if (nval1 > nval2) {
+            i = 1;
+          }         
+        } else{
+          var tval1:String = obj1[columnToSort].toString().toLowerCase();
+          var tval2:String = obj2[columnToSort].toString().toLowerCase();  
+          if(tval1 > tval2){
+            i = -1;
+          }
+          else if(tval1 < tval2){
+            i = 1;
+          }
+        }
+        
+      } 
+      return i;
+    } 
+    
+    /**
+    * Loads the data into the grid. The method also binds gridData lengths 
+    * for display. And sets the filter function to dataprovider arraycollection.
+    *
+    * @param dataRows : The data to be loaded taken in as an ArrayCollection from caller.
+    */    
+    public function loadData(dataRows:ArrayCollection):void{
+      BindingUtils.bindSetter(shownRecords,gridData,"length");
+      BindingUtils.bindSetter(shownRecords,gridData.list,"length");
+
+      gridData = dataRows;
+      dataGrid.dataProvider = gridData;
+      dataGrid.dataProvider.filterFunction = filterData;
+      shownRecords();
+    }
+
+    /**
+    * Caller can add controls to the grid near
+    * the print button using this method. Create a UI object, set
+    * properties to it, attach events etc. and then call this method and pass
+    * the UI object as arguement.
+    *
+    * @param ctrl : The newly created UI object to be passed from caller.
+    */    
+      public  function addControls(ctrl:DisplayObject):void{
+        if(ctrl!=null){
+          cvsControlSpace.addChild(ctrl);
+        }
+      }
+
+    /**
+    * To print the contents of the grid, we use the FlexPrintJob
+    * along with the PrintDataGrid component. This is to allow printing
+    * pagination.
+    *
+    * The PrintgridContent contains the PrintGridHeader 
+    * and the PrintGridFooter.
+    */    
+        public function doPrint():void {
+          var printJob:FlexPrintJob = new FlexPrintJob();
+          if (printJob.start()) {
+            var thePrintView:PrintGridContent = new PrintGridContent();
+            mx.core.FlexGlobals.topLevelApplication.addChild(thePrintView);
+            thePrintView.myDataGrid.columns = colinfo;
+        
+            thePrintView.width=printJob.pageWidth;
+            thePrintView.height=printJob.pageHeight;
+            thePrintView.setReportTitle(printTitle);
+        
+            if(shownData == 0){
+             thePrintView.totRecs = gotData;
+            }else{
+             thePrintView.totRecs = shownData;
+            }
+        
+            thePrintView.myDataGrid.dataProvider = dataGrid.dataProvider;
+            thePrintView.showPage("single");
+        
+            if(!thePrintView.myDataGrid.validNextPage){
+              printJob.addObject(thePrintView);
+            }else{
+              thePrintView.showPage("first");
+              printJob.addObject(thePrintView);
+              thePrintView.pageNumber++;
+              while(true){
+                thePrintView.myDataGrid.nextPage();
+                thePrintView.showPage("last");    
+
+                if(!thePrintView.myDataGrid.validNextPage){
+                  printJob.addObject(thePrintView);
+                  break;
+                }else{
+                  thePrintView.showPage("middle");
+                  printJob.addObject(thePrintView);
+                  thePrintView.pageNumber++;
+                }
+              }
+            }
+            mx.core.FlexGlobals.topLevelApplication.removeChild(thePrintView);
+          }
+          printJob.send();
+        }
+        
+      /**
+      * Copy the selected items to clipboard. If no rows are selected,
+      * the entire Grid is copied.
+      */
+      private function copyToClipBoard():void
+      {
+      var columns:Array = dataGrid.columns;
+      var textFromItems:String = "";
+      var arr : Array = dataGrid.selectedItems
+      if(arr.length == 0){
+        arr = ArrayCollection(dataGrid.dataProvider).toArray();
+      }
+      for each (var it:Object in arr){
+        for each (var c:DataGridColumn in columns)
+          textFromItems += it[c.dataField] + "\t";
+        textFromItems += "\n";
+      }
+      if(textFromItems != ""){
+        flash.system.System.setClipboard(textFromItems);
+        if(dataGrid.selectedItems.length > 0){
+          Alert.show("선택한 행이 클립보드에 복사되었습니다.", "[복사클립보드]");
+          /*
+          * 2012-10-05
+          * 이경우
+          * 소스 정리(다국어 미처리)로 주석처리
+          Alert.show(ResourceData.source["CGrid.ZM0001"], ResourceData.source["CGrid.ZM0002"]);
+          */
+        }else{
+          Alert.show("전체 행이 클립보드에 복사되었습니다.", "[복사클립보드]");
+          /*
+          * 2012-10-05
+          * 이경우
+          * 소스 정리(다국어 미처리)로 주석처리
+          Alert.show(ResourceData.source["CGrid.ZM0003"], ResourceData.source["CGrid.ZM0002"]);
+          */
+        }
+      }
+        
+      }        
+
+    /**
+    * Handles Filter Search and uses the filter 
+    * function specified in the initView() method. 
+    */  
+    private function handleFilterSearch():void{
+      dataGrid.dataProvider.refresh();          
+      shownRecords();       
+    }
+
+    /**
+    * Filters the data in the grid based on boolean 
+    * returned from the string compare search.
+    */  
+    private function filterData(item:Object):Boolean{
+      var colNos:int = colDataNames.length;
+      for(var i:int=0;i<colNos;i++){
+        if(item[colDataNames[i]] != null && item[colDataNames[i]].toString().toLowerCase().indexOf(txtSearchCriteria.text.toLowerCase()) != -1){
+          return true;
+        }
+      }
+      return false;
+    }                   
+
+    /**
+    * Handles the Highlight Search.
+    *
+    * Highlight Search : Highlights the results 
+    * of the search if available in the grid. Does not 
+    * remove data from the view. Only highlights them. 
+    */  
+    private function handleHighlightSearch():void{
+      dataGrid.invalidateDisplayList();
+    }
+
+    /**
+    * Highlights the data in the grid based on boolean 
+    * returned from the string compare search. 
+    */
+     private function highlightData(item:Object, color:uint):uint {
+      var colNos:int = colDataNames.length;
+      if(txtSearchCriteria.text==null) {
+        return color;
+      }
+      if(txtSearchCriteria.text.length > 1 && searchType == "highlight"){
+        for(var i:int=0;i<colNos;i++){
+          if(item[colDataNames[i]] != null && item[colDataNames[i]].toString().toLowerCase().indexOf(txtSearchCriteria.text.toLowerCase()) != -1){
+            return 0xEBEF80;
+          }
+        }
+      }
+      return color;
+    }
+         
+    /**
+    * Calls the appropriate method based on 
+    * the type of search passed from the caller.
+    */           
+    private function handleSearch():void{
+      //자동조회가 아닐경우 filter나 highlignt기능을 사용하지 않도록 한다
+      if(!isAutoQuery){
+        return;
+      }
+      if(searchType == "filter"){
+        handleFilterSearch();
+      }else if(searchType == "highlight"){
+        handleHighlightSearch();
+      }
+    }
+
+    /**
+    * Creates a titlewindow and pops it up on button click
+    */      
+    private function createColList():void{
+      var SPACING_X : int = 0;
+      var SPACING_Y : int = 0;      
+      popupColumns = new TitleWindow();
+      popupColumns.id = "cvsColumnList";
+      popupColumns.name = "cvsColumnList";
+      //popupColumns.title = "Select Columns";
+      popupColumns.title = "컬럼선택";
+      /*
+      * 2012-10-05
+      * 이경우
+      * 소스 정리(다국어 미처리)로 주석처리
+      popupColumns.title = ResourceData.source["CGrid.popupColumnsTitle"];
+      */
+      popupColumns.showCloseButton = true;
+      popupColumns.addEventListener("close",closePopup);
+      popupColumns.styleName = "columnList";
+      popupColumns.setStyle("horizontalGap",1);
+
+      var rect:Rectangle = columnsButton.getRect(columnsButton);
+      var pt:Point = columnsButton.localToGlobal(rect.bottomRight);     
+
+      if((pt.x + SPACING_X + popupColumns.minWidth) > root.width){
+        // show side
+        popupColumns.x = pt.x - SPACING_X-popupColumns.minWidth;
+        popupColumns.y = pt.y - SPACING_Y;
+      }
+      else {
+        // show below
+        popupColumns.x = pt.x + SPACING_X;
+        popupColumns.y = pt.y + SPACING_Y;  
+      }
+      PopUpManager.addPopUp(popupColumns, columnsButton, true);
+    }
+
+    /**
+    * Closes the titlewindow.
+    */      
+    private function closePopup(event:CloseEvent):void{
+      setColumnChoice();
+      popupColumns.visible = false;
+    }
+    
+    /**
+    * Populates the popped up titlewindow with checkboxes, one
+    * each for each columns defined. The visible columns will
+    * be checked and the non-visible columns will be unchecked. 
+    */      
+    private function columnList():void{
+      if(popupColumns == null){
+        createColList();
+      }else{
+        popupColumns.removeAllChildren();
+        popupColumns.visible = true;
+      }
+              
+      for(var i:int = 0; i<gridColumns.length;i++){
+        var chkb:CheckBox = new CheckBox(); 
+        chkb.id = i.toString();
+        
+        if(i == 0){
+          if(gridColumns.source.indexOf("indexColumn") > 0){
+            //do nothing
+            chkb.enabled = true;
+          }else{
+            chkb.enabled = false;
+          }
+        }
+        
+        if(gridColumns[i].indexColumn == true){
+          chkb.enabled = false;
+        }
+        if(dataGrid.columns[i].visible == false){
+          chkb.selected = false;
+        }else{
+          chkb.selected = true;
+        }
+
+        chkb.label = gridColumns[i].colname;
+        chkb.addEventListener(Event.CHANGE,showhideCol);
+        popupColumns.addChild(chkb);
+      }
+      PopUpManager.bringToFront(popupColumns);
+    }
+
+    /**
+    * Called on click of checkboxes. Hides or Shows columns
+    * based on checked status.
+    */      
+    private function showhideCol(event:Event):void{
+      var dgc:DataGridColumn;
+      dgc = dataGrid.columns[event.target.id];
+      if(dataGrid.columnCount > 2){
+        dgc.visible = event.target.selected;
+      }
+    }
+
+    /**
+    * Saving column choice in SO
+    */      
+    private function setColumnChoice(event:DataGridEvent = null):void{
+      var dCols:Array = new Array();
+      for(var i:int=0;i<dataGrid.columnCount;i++){
+          var colattr:Object =new Object();
+          colattr.dataField = dataGrid.columns[i].dataField;
+          colattr.visible = dataGrid.columns[i].visible;
+          colattr.width = dataGrid.columns[i].width;
+          colattr.sortDescending = dataGrid.columns[i].sortDescending;
+          dCols.push(colattr);
+      }
+      Preferences.getInstance.setGridPreference(new String(this.id.toLowerCase()), dCols);
+    }
+    
+    /**
+     * 현재 선택한 row에 대한 정보출력하기
+     */ 
+    private function setItemclick(event:ListEvent = null):void{
+      if(event.rowIndex==-1){
+        lblDataInfo.text = "";
+      }else{
+        shownData = gridData.length;
+        lblDataInfo.text = (event.rowIndex+1)+"/"+shownData+" 건";
+        /*
+        * 2012-10-05
+        * 이경우
+        * 소스 정리(다국어 미처리)로 주석처리
+        lblDataInfo.text = (event.rowIndex+1)+"/"+shownData+ResourceData.source["CGrid.LblDataInfo"];
+        */
+      }
+      
+      //현재 선택한 row에 대한 값을 넘겨주기 위한 처리부분.  
+      try{
+        if(dataGrid.dataProvider.length<=event.rowIndex)
+          return;
+        dataGrid.selectedIndex = event.rowIndex;
+        if(_parent.setItemclick!=null)
+          _parent.setItemclick(dataGrid.selectedItem);
+      }catch(e:Error){
+      }
+    }
+    
+    /**
+     * 전체검색 function호출하기.
+     */
+    private function selectTotal():void{
+      try{
+        _parent.selectTotal();
+      }catch(e:Error){
+      }
+    }
+    
+    /**
+     * Double click시 해당 값을 던져주기 위한 function
+     */
+    private function setItemDoubleClick(event:ListEvent=null):void{
+      try{
+        //체크박스 사용시 더블클릭시 체크박스 엑션과 같게 함.
+        if(isCheckBox) {
+          if(dataGrid.dataProvider==null || dataGrid.selectedItem==null)
+            return;
+          
+          if( dataGrid.selectedItem["CHK"] == "Y" ) {
+            dataGrid.selectedItem["CHK"] = "N";
+          }else{
+            dataGrid.selectedItem["CHK"] = "Y";
+          }
+          dataGrid.dataProvider.itemUpdated(dataGrid.selectedItem);
+          return;
+        }
+        if(event!=null)
+          dataGrid.selectedIndex = event.rowIndex;
+        _parent.setItemDoubleClick(dataGrid.selectedItem);
+      }catch(e:Error){
+      }
+    }
+    
+    /**
+     * Enter Key 처리 function
+     */
+    private function setKeyDown(event:KeyboardEvent):void{
+      if(event.keyCode==Keyboard.ENTER && dataGrid.selectedItem && dataGrid.selectedIndex>-1){
+          _parent.setItemDoubleClick(dataGrid.selectedItem);
+      }
+    }
+    
+    /**
+    * 기본 Focus지정하기.
+    */
+    override public function setFocus():void{
+      dataGrid.setFocus();
+    }
+    
+    //-------------------------------------------------------------------------------------------------------
+    // 다국어 처리하기.
+    /*
+    * 2012-10-05
+    * 이경우
+    * 소스 정리(다국어 미처리)로 주석처리
+    private function initResource():void {
+      if(ConstClass.IS_USED_LOCALE!=ConstClass.CONST_Y) {
+        return;
+      }
+      txtSearchCriteria.prompt    = ResourceData.source["CGrid.txtSearchCriteriaPrompt"];
+      reloadTotalButton.toolTip   = ResourceData.source["CGrid.reloadTotalButtonTooltip"];
+      printButton.toolTip         = ResourceData.source["CGrid.printButtonToolTip"];
+      copyButton.toolTip          = ResourceData.source["CGrid.copyButtonToolTip"];
+      columnsButton.toolTip       = ResourceData.source["CGrid.columnsButtonToolTip"];
+    }
+    */
+    //-------------------------------------------------------------------------------------------------------
+
+    /**
+    * 선택하기
+    */
+    private function btnSelected_clickHandler(event:MouseEvent=null):void {
+      if(isCheckBox) {
+        var acCheckValue:ArrayCollection = new ArrayCollection();
+        if(dataGrid.dataProvider is ArrayCollection ){
+          acCheckValue.source = dataGrid.dataProvider.source;
+        }else if(dataGrid.dataProvider is Array ){
+          acCheckValue.source = dataGrid.dataProvider as Array;
+        }
+        
+        acCheckValue.filterFunction = function (item:Object):Boolean {
+          return item["CHK"]=="Y";
+        };
+        acCheckValue.refresh();
+        //배열로 넘김니다.
+        _parent.setItemsDoubleClick(acCheckValue.toArray());
+        
+        acCheckValue = null;
+      }else{
+        //현재 선택한 row에 대한 값을 넘겨주기 위한 처리부분.  
+        try{
+          if(_parent.setItemDoubleClick!=null && dataGrid.selectedItem!=null) {
+            _parent.setItemDoubleClick(dataGrid.selectedItem);
+          }
+        }catch(e:Error){
+        }
+      }
+    }
+    
+    private var _isAutoQuery:Boolean = true;
+    /**
+     * 자동조회여부
+     */
+    public function get isAutoQuery():Boolean
+    {
+      return _isAutoQuery;
+    }
+    
+    public function set isAutoQuery(value:Boolean):void
+    {
+      _isAutoQuery = value;
+    }
+  ]]>
+</fx:Script>
+  <s:HGroup width="100%" id="searchPanel" gap="1" verticalAlign="middle">
+    <s:HGroup id="searchControl" styleName="searchPanel" height="22" width="150" gap="0">
+      <mx:VRule height="100%" styleName="searchVRule" />
+      <flexlib:PromptingTextInput change="{handleSearch()}" id="txtSearchCriteria"  width="88%" height="100%" styleName="searchText" prompt="검색할 단어"/>
+    </s:HGroup>
+    <mx:Spacer width="1%"/>
+    <s:Group  id="cvsControlSpace" width="99%"/>
+    <s:Label  id="lblDataInfo"  textAlign="right" />
+    <mx:Image id="reloadTotalButton" styleName="gridButton" click="selectTotal()" width="22" source="{reloadTotal}" buttonMode="true" toolTip="전체검색"/>
+    <mx:Image id="printButton" styleName="gridButton" click="doPrint()" width="22" source="{icoPrint}" buttonMode="true" toolTip="출력"/>
+    <mx:Image id="copyButton" styleName="gridButton" click="copyToClipBoard()" width="22" source="{icoCopy}" buttonMode="true" toolTip="복사하기"/>
+    <mx:Image id="columnsButton" styleName="gridButton" click="columnList()" width="22" source="{icoColumns}" buttonMode="true" toolTip="컬럼보기/숨기기"/>
+  </s:HGroup>
+  <!--<grid:RCDataGrid rowColorFunction="highlightData" width="100%" height="100%" horizontalCenter="0" id="dataGrid" bottom="0" allowMultipleSelection="true" headerRelease="{sortHeader(event)}" horizontalScrollPolicy = "auto" itemClick="setItemclick(event)" change="setItemclick(event)" doubleClick="setItemDoubleClick()" doubleClickEnabled="true"/>-->
+  <grid:RCDataGrid rowColorFunction="highlightData" width="100%" height="100%" 
+    horizontalCenter="0" id="dataGrid" bottom="0" allowMultipleSelection="true"
+    horizontalScrollPolicy = "auto"
+    itemClick="{setItemclick(event)}" change="{setItemclick(event)}"
+    keyDown="{setKeyDown(event)}"
+    doubleClick="{setItemDoubleClick()}" doubleClickEnabled="true"
+    headerBackgroundSkin="com.asetec.common.components.AsetecDataGridHeaderSkin"
+    headerStyleName="asetecGridHeaderStyle"
+    />
+  <s:HGroup width="100%" horizontalAlign="right">
+    <s:Button id="btnSelected" height="30" label="선택" click="btnSelected_clickHandler(event)"/>
+  </s:HGroup>
+</s:VGroup>

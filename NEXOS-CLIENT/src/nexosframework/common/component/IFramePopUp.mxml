@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--######################################################################
+Title       : Html의 Iframe같은 역활을 하는 Component.
+Size        : Custom
+Author      : Lee Kyung-woo
+Date        : 2008-07-24
+Description
+  출력을 위한 Popup, Iframe을 이용해서 해당 Url을 호출하도록 합니다.
+==========================================================================
+
+Update History
+==========================================================================
+Date.       Author.         Description.
+==========================================================================
+2008-07-24  Lee Kyung-woo   최초작성.
+##########################################################################-->
+<base:AsetecPopUp  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+              xmlns:s="library://ns.adobe.com/flex/spark" 
+              xmlns:mx="library://ns.adobe.com/flex/mx"
+              xmlns:base="nexosframework.common.base.*"
+              xmlns:component="nexosframework.common.component.*"
+              width="1000"
+              height="600"
+              isResourceUsed="false"
+              close="{closePopup(event)}"
+              resize="{_resizeFrame(event)}"
+              remove="_remove(event)"
+              move="{_move(event)}" 
+  >
+  <fx:Script>
+    <![CDATA[
+      import mx.events.CloseEvent;
+      import mx.events.MoveEvent;
+      import mx.events.ResizeEvent;
+      
+      import nexosframework.common.ConstClass;
+      [Bindable]
+      public var source:String = "";
+      [Bindable]
+      public var isPost:String = "Y";
+      
+      /**
+      * 이동시 ifram위치를 같이 이동시킵니다.
+      * @param event MoveEvent
+      */
+      private function _move(event:MoveEvent):void {
+        iframeMain.dispatchEvent(event);
+      }
+      
+      private function _resizeFrame(event:ResizeEvent):void {
+        iframeMain.dispatchEvent(event); 
+      }
+      
+      private function _remove(event:Event):void {
+        iframeMain.dispatchEvent(new Event(Event.REMOVED));
+      }
+      
+      /**
+      * 창을 닫으면 iframe을 삭제하도록 합니다.
+      */
+      override public function closePopup(event:CloseEvent=null):void{
+        super.closePopup(event);
+      }
+    ]]>
+  </fx:Script>
+  
+  <component:IFrame id="iframeMain" width="100%" height="100%" source="{source}" visible="true" isPost="{isPost}"/>
+  
+</base:AsetecPopUp>

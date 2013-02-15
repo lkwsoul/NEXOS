@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--######################################################################
+Title       : 로그아웃 Component.
+Size        : 0 * 0
+Author      : Lee Kyung-woo
+Date        : 2008-03-07
+Description
+      로그아웃하는 component.
+==========================================================================
+
+Update History
+==========================================================================
+Date.       Author.         Description.
+==========================================================================
+2008-02-29  Lee Kyung-woo   최초작성.
+##########################################################################-->
+<s:Button xmlns:fx="http://ns.adobe.com/mxml/2009" 
+           xmlns:s="library://ns.adobe.com/flex/spark" 
+           xmlns:mx="library://ns.adobe.com/flex/mx"
+           skinClass="assets.skin.TopLogoutButtonSkin"
+           width="100%" height="100%"
+           toolTip="로그아웃"
+           click="_clickHandler(event)"
+           implements="nexosframework.common.service.ServiceReceiver"
+>
+  <fx:Script>
+    <![CDATA[
+      import mx.controls.Alert;
+      import mx.events.CloseEvent;
+      import mx.events.FlexEvent;
+      
+      import nexosframework.common.service.Service;
+      import nexosframework.common.service.ServiceCallType;
+      import nexosframework.common.service.ServiceFault;
+      import nexosframework.common.service.ServiceResult;
+      import nexosframework.common.service.ServiceRunner;
+      import nexosframework.service.wc.WCServiceImpl;
+      
+      /**
+      * 로그아웃 여부를 묻는 function
+      */
+      public function _clickHandler(event:MouseEvent):void {
+        Alert.show("로그아웃 하시겠습니까?" ,"로그아웃 여부" ,3 ,null ,logout);
+      }
+      
+      /**
+       * 로그아웃을 처리하는 fucntion
+       */
+      public function logout(event:CloseEvent):void {
+        if (event.detail==Alert.NO)
+          return;
+        
+        //서비스 생성
+        var service:Service       = new WCServiceImpl();
+        //매소드처리 타입
+        service.methodName        = WCServiceImpl.GET_LOGOUT;
+        //되돌려 받을 화면설정
+        service.view              = this;
+        //Calltype 설정
+        service.callType          = ServiceCallType.BOOLEAN;
+        
+        //서비스 실행한다 
+        ServiceRunner.service     = service;
+        ServiceRunner.call();
+      }
+      
+      //########################################################################
+      // ServiceReceiver 구현 부분 - 시작
+      /**
+       * 로그아웃 실패시
+       * @param ServiceFault
+       */
+      public function serviceFaultHandler(fault:ServiceFault):void {
+        var strFaultString:String = fault.message;
+        switch(fault.destination) {
+          case WCServiceImpl.DESTINATION:
+            Alert.show(strFaultString, "[로그인에러]");
+            break;
+        }
+      }
+      
+      /**
+       * 로그아웃 성공시
+       * @param ServiceResult 처리 결과를  resultArrayCollection, resultMap, resultString...등으로 결과를 받을 수 있습니다.
+       */
+      public function serviceResultHandler(result:ServiceResult):void {
+        switch(result.destination) {
+          case WCServiceImpl.DESTINATION:
+            //URL방식으로 Logout을 하도록 합니다.
+            var url:URLRequest            = new URLRequest("/");
+            url.method                    = URLRequestMethod.POST;
+            
+            //Calling Transporter Servlet      
+            navigateToURL(url,"_self");
+            break;
+        }
+      }
+      // ServiceReceiver 구현 부분 - 종료
+      //########################################################################
+    ]]>
+  </fx:Script>
+  <fx:Declarations>
+  </fx:Declarations>
+</s:Button>

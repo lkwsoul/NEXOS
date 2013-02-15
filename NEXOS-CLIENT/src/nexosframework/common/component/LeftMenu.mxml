@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--######################################################################
+Title       : 사용자별 메뉴 Tree Component.
+Size        : Custom size
+Author      : Lee Kyung-woo
+Date        : 2008-03-07
+Description
+      로그인 이후에 사용자별 프로그램 리스트를 Tree형태로 출력하는 component.
+==========================================================================
+
+Update History
+==========================================================================
+Date.       Author.         Description.
+==========================================================================
+2008-02-29  Lee Kyung-woo   최초작성.
+2011-07-22  Lee Kyung-woo   아이콘 Skin방식 변경.
+                            Embed형식으로 하면 Layout overflow가 발생됨.
+##########################################################################-->
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+                xmlns:s="library://ns.adobe.com/flex/spark"
+                xmlns:mx="library://ns.adobe.com/flex/mx" 
+                xmlns:view="com.asetec.view.*"
+                xmlns:components="com.asetec.common.components.*" 
+                creationComplete="initComponent()"
+                remove="{_removeHandler(event)}"
+                horizontalScrollPolicy="off"
+                layout="vertical"
+                title="{titleWindowsTitle}" 
+                styleName="close"
+                paddingBottom="0" paddingLeft="0" paddingRight="0" paddingTop="0"
+                showCloseButton="true" close="{mx.core.FlexGlobals.topLevelApplication.clickMenu(event)}"
+                dropShadowVisible="false"
+                width="100%" height="100%"
+                implements="nexosframework.common.service.ServiceReceiver"
+                >
+  <fx:Metadata>
+    [Inspectable(category="Asetec")]
+  </fx:Metadata>
+  <fx:Script>
+      <![CDATA[
+        import mx.core.FlexGlobals;
+        import mx.events.FlexEvent;
+        import mx.events.ListEvent;
+        
+        import nexosframework.common.ConstClass;
+        import nexosframework.common.Session;
+        import nexosframework.common.service.Service;
+        import nexosframework.common.service.ServiceFault;
+        import nexosframework.common.service.ServiceResult;
+        import nexosframework.common.service.ServiceRunner;
+        import nexosframework.service.wc.WCServiceImpl;
+        
+        //Icon 선언부.
+        //[Embed(skinClass="_LeafIcon")]
+        private const leaf_icon:Class = _LeafIcon;
+        
+        //프로그램구분에 따른 icon
+        //[Embed(skinClass="_ProgramDivEIcon")]
+        private const leaf_iconE:Class = _ProgramDivEIcon;
+        //[Embed(skinClass="_ProgramDivRIcon")]
+        private const leaf_iconR:Class = _ProgramDivRIcon;
+        //[Embed(skinClass="_ProgramDivSIcon")]
+        private const leaf_iconS:Class = _ProgramDivSIcon;
+        
+        /*
+        [Embed(source="/assets/img/left_tree_full_list.png")]
+        private var icon1:Class;
+        [Embed(source="/assets/img/left_tree_icon_list.png")]
+        private var icon2:Class;
+        [Embed(source="/assets/img/left_tree_text_list.png")]
+        private var icon3:Class;
+        [Embed(source="/assets/img/left_tree_tree.png")]
+        private var icon4:Class;
+        */
+        
+        [Bindable]
+        public var datasource_xml:XML;
+        
+//        [Bindable]
+//        public var xmlExecProgramList:XML = new XML();
+        
+//        [Bindable]
+//        private var acExecProgramList:ArrayCollection = new ArrayCollection();
+        
+        [Inspectable(category="Size")]
+        [Bindable]
+        public var intGapSize:Number = 20;
+        
+        [Bindable]
+        public var titleWindowsTitle:String = "메뉴";
+        
+        /*
+        private var _ProgramDivEIcon:Class = _ProgramDivEIcon;
+        private var _ProgramDivRIcon:Class = _ProgramDivRIcon;
+        private var _LeafIcon:Class        = _LeafIcon;
+        */
+        
+        /**
+        * Component 초기화
+        */
+        private function initComponent():void{
+          //Tree에 대한 CickEvent를 tree내용에 주도록 수정.
+          //ctree.styleName="treeStyle";
+          /*
+          ctree.addEventListener(ListEvent.ITEM_CLICK                        ,callProgram);
+          ctree.addEventListener(ListEvent.ITEM_DOUBLE_CLICK                 ,callProgram);
+          */
+          //ctree.addEventListener(ListEvent.CHANGE                            ,callProgram);
+          ctree.addEventListener(ListEvent.ITEM_CLICK                        ,callProgram);
+        }
+        
+        private function _removeHandler(event:FlexEvent):void {
+          //removeEventListener(MenuResultEvent.EVENT_SERVICE_RESULT              ,menuResult);
+          ctree.removeEventListener(ListEvent.ITEM_CLICK                        ,callProgram);
+        }
+        
+        /**
+        * 메뉴정보 가져오기
+        */
+        public function startProcessing(userId:String):void {
+          //서비스 생성
+          var service:Service       = new WCServiceImpl();
+          //매소드처리 타입
+          service.methodName        = WCServiceImpl.GET_MENU; 
+          //파라메터 세팅
+          var objMap:Object         = new Object(); 
+          objMap["P_USER_ID"]       = userId;
+          service.map               = objMap;
+          //되돌려 받을 화면설정
+          service.view              = this;
+          
+          //서비스 실행한다 
+          ServiceRunner.service     = service;
+          ServiceRunner.call();
+        }
+        
+        /**
+        * 프로그램 선택에 따른 프로그램 호출 처리 function
+        */
+        private function callProgram(event:ListEvent):void{
+          
+          if(event.rowIndex==-1)
+            return;
+
+          //Tree일 경우.
+          if(event.itemRenderer==null || event.itemRenderer.data==null)
+            return;
+          
+          var objRow:Object = event.itemRenderer.data;
+          var strProgramDiv:String = objRow.@program_div;
+          
+          if(strProgramDiv=="" || strProgramDiv==ConstClass.PROGRAM_DIV_MENU){
+						if (ctree.selectedItem || ctree.dataDescriptor.isBranch(ctree.selectedItem)) {
+							ctree.expandItem(ctree.selectedItem, !ctree.isItemOpen(ctree.selectedItem));
+						}
+						
+						return;
+					}
+
+          mx.core.FlexGlobals.topLevelApplication.addWindow(objRow.@program_id, objRow.@program_nm, objRow.@url,        objRow.@wide_yn,
+                                                            objRow.@program_div,objRow.@exe_level1, objRow.@exe_level2, objRow.@exe_level3, objRow.@exe_level4);
+          
+          event.stopImmediatePropagation();
+        }
+        
+        /**
+        * 메뉴가져오는것이 실패 했을 경우
+        */
+        public function serviceFaultHandler(fault:ServiceFault):void {
+        }
+        
+        /**
+        * 메뉴가져오는것이 성공했을 경우
+        * @apram 
+        */
+        public function serviceResultHandler(result:ServiceResult):void {
+          this.datasource_xml = new XML(result.resultString);
+        }
+        
+        /*
+        private function changeTreeData(mode:String):void {
+          ctree.mode = mode;
+          
+          if(mode==ConvertibleTreeList.TREE){
+            BindingUtils.bindProperty(ctree, "dataProvider", this, "datasource_xml");
+          }else if(mode==ConvertibleTreeList.FULL_LIST){
+            getProgramList();
+          }
+        }
+        */
+        
+        /**
+        * 실행중인 프로그램 리스트를 구하기
+        */
+        /*
+        public function getProgramList():void{
+          var arr:Array = mx.core.FlexGlobals.topLevelApplication.canvas_main.windowManager.windowList;
+          xmlExecProgramList = <group/>;
+          arr.forEach(  
+            function(item:*, index:uint, array:Array):void{
+              var newNode:XML;
+              newNode = <item/>;
+              newNode.@program_id   = item.program_id;
+              newNode.@program_nm   = item.program_nm;
+              newNode.@label        = item.program_nm;
+              newNode.@wide_yn      = item.wide_yn;
+              newNode.@url          = item.url;
+              newNode.@program_div  = item.program_div;
+              
+              switch(item.program_div){
+                case ConstClass.PROGRAM_DIV_ENTRY:
+                  newNode.@icon     = ConstClass.ICON_ENTRY;
+                break;
+                case ConstClass.PROGRAM_DIV_INQUIRY:
+                  newNode.@icon     = ConstClass.ICON_SELECT;
+                break;
+                case ConstClass.PROGRAM_DIV_PRINT:
+                  newNode.@icon     = ConstClass.ICON_REPORT;
+                break;
+                default:
+                  newNode.@icon     = ConstClass.ICON_DEFAULT;
+                break;
+              }
+              
+              newNode.@exe_level1   = item.exe_level1;
+              newNode.@exe_level2   = item.exe_level2;
+              newNode.@exe_level3   = item.exe_level3;
+              newNode.@exe_level4   = item.exe_level4;
+              xmlExecProgramList.appendChild(newNode);
+            }
+          );
+          
+          BindingUtils.bindProperty(ctree, "dataProvider", this, "xmlExecProgramList");
+          ctree.tree.styleName="treeStyle";
+        }
+        */
+        
+        
+      ]]>
+  </fx:Script>
+  <s:VGroup id="vgMenu" width="100%" height="100%" gap="0">
+    <mx:Tree id="ctree" width="100%" height="100%"
+             dataProvider="{datasource_xml}"
+             showRoot="false"
+             iconField="@icon" 
+             labelField="@label"
+             styleName="treeStyle"
+             />
+    <!--
+    <flexlib:ConvertibleTreeList width="100%" height="100%"
+                                 id="ctree"
+                                 dataProvider="{datasource_xml}"
+                                 showRoot="false"
+                                 iconField="@icon" 
+                                 labelField="@label"
+                                 listField="@label"/>-->  
+    <s:HGroup id="hgMenuButtons" width="100%" gap="1" horizontalAlign="right">
+      <!-- 2010-05-12 Lee Kyung woo -->
+      <!-- 주석처리 일괄적으로 xml로 변환해서 처리하는 로직 대신 프로그램 호출시/닫을때 추가 삭제되도록 로직 다시 구성할 필요 있음. -->
+      <!--
+      <mx:ToggleButtonBar id="tbb_tree" itemClick="{changeTreeData(event.item.mode)}" styleName="LeftToggleButtonBar" width="100%" minWidth="10">
+        <mx:dataProvider>
+          <fx:Array>
+            <fx:Object icon="{icon4}" mode="{ConvertibleTreeList.TREE}"/>
+            <fx:Object icon="{icon1}" mode="{ConvertibleTreeList.FULL_LIST}"/>
+          </fx:Array>
+        </mx:dataProvider>
+      </mx:ToggleButtonBar>
+      -->
+      <s:Button id="btnLoading" label="Loading" click="{startProcessing(Session.G_USER_ID)}" enabled="true" width="80" height="22"/>  
+    </s:HGroup>
+  </s:VGroup>
+</mx:TitleWindow>
