@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ######################################################################################
+  ## 공통적으로 사용하는 Spring Root Context 설정 [트랜잭션 설정]                                                     
+  ## Author     : Lee Kyung-woo                                                       
+  ## Date       : 2012-10-25                          
+  ## Description
+  ##   Root Context 중에서 트랜잭션 설정 부분
+  ######################################################################################
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.1.xsd">
+  
+  <!-- Transction 매니저 등록 -->
+  <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <property name="dataSource" ref="dataSource"/>
+  </bean>
+  
+  <!-- Transaction을 애노테이션으로 관리하기 위한 선언 -->
+  <tx:annotation-driven transaction-manager="transactionManager"/>
+  
+  <!--
+  <tx:advice id="txAdvice" transaction-manager="transactionManager">
+    <tx:attributes>
+     <tx:method name="execute*" read-only="false" rollback-for="BizException" propagation="REQUIRED"/>
+    </tx:attributes>
+  </tx:advice>
+    
+  <aop:config>
+    <aop:pointcut id="testServiceProcOperation" expression="execution(* test.logic.proc.*Proc.*(..))" />
+    <aop:advisor advice-ref="txAdvice" pointcut-ref="testServiceProcOperation"/>
+  </aop:config>
+  -->
+</beans>

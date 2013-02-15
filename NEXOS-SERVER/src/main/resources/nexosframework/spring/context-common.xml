@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+<!--
+  ######################################################################################
+  ## 공통적으로 사용하는 Spring Root Context 설정 [공통]                                                     
+  ## Author     : Lee Kyung-woo                                                       
+  ## Date       : 2012-10-25                          
+  ## Description
+  ##   Root Context 중에서 공통적인 설정
+  ######################################################################################
+-->
+
+  <!-- SpEL사용 -->
+  <util:properties id="dbprops" location="classpath:/nexosframework/property/globals.properties" />
+  
+  <context:annotation-config />
+  
+  <!-- 인터페이스없이 직접적으로 Proxy 적용하도록 설정한다 -->
+  <aop:config proxy-target-class="true"/>
+
+</beans>

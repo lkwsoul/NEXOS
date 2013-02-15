@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ######################################################################################
+  ## 공통적으로 사용하는 Spring Root Context 설정 [보안 설정]                                                     
+  ## Author     : Lee Kyung-woo                                                       
+  ## Date       : 2012-11-20                          
+  ## Description
+  ##   Root Context 중에서 보안 설정 부분
+  ######################################################################################
+-->
+<b:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:b="http://www.springframework.org/schema/beans"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+             http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.1.xsd">
+
+  <!-- <http auto-config="true" use-expressions="true" entry-point-ref="entryPoint"> -->
+  <http auto-config="true" use-expressions="true" >
+    <intercept-url pattern="/Main.jsp"          access="permitAll"                      />
+    <intercept-url pattern="/crossdomain.xml"   access="permitAll"                      />
+    <intercept-url pattern="/**/*.swf"          access="permitAll"                      />
+    <intercept-url pattern="/**/*.gif"          access="permitAll"                      />
+    <intercept-url pattern="/**/*.css"          access="permitAll"                      />
+    <intercept-url pattern="/**/*.gif"          access="permitAll"                      />
+    <intercept-url pattern="/**/*.png"          access="permitAll"                      />
+    <intercept-url pattern="/**/*.jpg"          access="permitAll"                      />
+    <intercept-url pattern="/**/*.ttf"          access="permitAll"                      />
+    <intercept-url pattern="/**/*.html"         access="permitAll"                      />
+    <intercept-url pattern="/**/*.js"           access="permitAll"                      />
+    <intercept-url pattern="/**"                access="hasRole('ROLE_USER')"           />
+  </http>             
+ 
+  <!-- <b:bean id="entryPoint" class="org.springframework.security.web.authentication.Http403ForbiddenEntryPoint"/> -->
+  <!-- <b:bean id="entryPoint" class="org.springframework.flex.security3.FlexAuthenticationEntryPoint"/> -->
+  
+  <b:bean id="customUserDetailsService"   class="nexosframework.services.CustomUserDetailsServiceImpl" />
+  <authentication-manager alias="authenticationManager">
+    <authentication-provider user-service-ref="customUserDetailsService"/>
+  </authentication-manager>
+  
+  <global-method-security secured-annotations="enabled" jsr250-annotations="enabled">
+    <!-- services중에서 call로 시작하는 메소드에 대해서 ROLE_USER를 세팅합니다 -->
+    <!--
+    <protect-pointcut access="ROLE_USER"
+      expression="execution(* nexosframework.services.call*(..))"/>
+    -->
+  </global-method-security>
+  
+  <!--
+  <http auto-config="true"  entry-point-ref="entryPoint">
+    <anonymous enabled="false"/>
+  </http>
+  
+  <b:bean id="entryPoint" class="org.springframework.flex.security3.FlexAuthenticationEntryPoint"/>
+  <authentication-manager>
+    <authentication-provider user-service-ref="authenticationDao"/>
+  </authentication-manager>
+ 
+ <b:bean id="authenticationDao" class="org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl">
+    <b:property name="dataSource" ref="dataSource"/>
+    <b:property name="usersByUsernameQuery">
+     <b:value>
+         SELECT USER_ID, USER_PWD FROM CSUSER WHERE USER_ID=?
+     </b:value>
+    </b:property>
+    <b:property name="authoritiesByUsernameQuery">
+        <b:value>
+            SELECT USER_ID, 'ROLE_USER' AS PRIVILEGE FROM CSUSER WHERE USER_ID=?
+        </b:value>
+    </b:property>
+  </b:bean>
+  -->
+  
+  <!--
+  <b:bean id="authenticationDao" class="org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl">
+	  <b:property name="dataSource" ref="dataSource"/>
+	  <b:property name="usersByUsernameQuery">
+	   <b:value>
+	       SELECT USERNAME, PASSWORD, true as enabled FROM USER WHERE USERNAME=?
+	   </b:value>
+	  </b:property>
+	  <b:property name="authoritiesByUsernameQuery">
+	      <b:value>
+	          SELECT USERNAME, 'ROLE_ADMIN' AS PRIVILEGE FROM USER WHERE USERNAME=?
+	      </b:value>
+	  </b:property>
+  </b:bean>
+ 
+  <global-method-security secured-annotations="enabled" jsr250-annotations="enabled"/>
+ -->           
+  <!--
+  <http entry-point-ref="entryPoint">
+    <anonymous enabled="false"/>
+  </http>
+  
+  <http pattern="/Main.jsp" security="none" />
+  <http auto-config="true" use-expressions="true">
+    <intercept-url pattern="/**/*.html" access="ROLE_USER" />
+    <intercept-url pattern="/**"        access="ROLE_USER" />
+  </http>
+  
+  <b:bean id="entryPoint" class="org.springframework.flex.security3.FlexAuthenticationEntryPoint"/>
+  
+  <authentication-manager>
+	  <authentication-provider>
+	    <user-service>
+        <user name="john"  password="john"  authorities="ROLE_USER" />
+        <user name="admin" password="admin" authorities="ROLE_USER, ROLE_ADMIN" />
+        <user name="guest" password="guest" authorities="ROLE_GUEST" />
+	    </user-service>
+	  </authentication-provider>
+	</authentication-manager>
+	-->
+  <!-- ##################################################################### -->
+  <!-- 2012-12-10 이전 설정 테스트 주석처리 -->
+  <!--
+  <http pattern="/Main.jsp" security="none" />
+  <http pattern="/*.swf"    security="none" />
+  <http auto-config="true" use-expressions="true">
+    <intercept-url pattern="/**/*.html" access="ROLE_USER" />
+    <intercept-url pattern="/**"        access="ROLE_USER" />
+  </http>
+  
+  <authentication-manager>
+    <authentication-provider>
+      <user-service>
+        <user name="user" password="user" authorities="ROLE_USER" />
+        <user name="admin" password="admin" authorities="ROLE_USER, ROLE_ADMIN" />
+      </user-service>
+    </authentication-provider>
+  </authentication-manager>
+  -->
+  <!-- ##################################################################### -->
+  
+  
+  <!-- <global-method-security>
+    <protect-pointcut access="ROLE_ADMIN" 
+      expression="execution(* nl.gridshore.samples.books.business.*Manager.store*(..))"/>
+    <protect-pointcut access="ROLE_USER"
+      expression="execution(* nl.gridshore.samples.books.business.*Manager.obtain*(..))"/>
+  </global-method-security> -->
+    
+
+  <!--  <global-method-security secured-annotations="enabled" /> -->
+  
+  <!-- <http auto-config='true'>
+    <intercept-url pattern="/login.html*" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+    <intercept-url pattern="/welcome.html*" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+    <intercept-url pattern="/**" access="ROLE_ADMIN" />
+    <form-login login-page="/Main.jsp" default-target-url="Main.jsp" always-use-default-target="true" authentication-failure-url="/login.html" />
+    <logout logout-success-url="/welcome.html" delete-cookies="JSESSIONID" />
+    <remember-me key="daSDAsdaSDsa" />
+  </http> -->
+    
+  
+  <!-- <http pattern="Main.jsp"  security="none"/>
+  <http pattern="/**/*.swf" security="none"/>
+  <http auto-config="true"/> -->
+  <!-- <http auto-config="true">
+    <intercept-url pattern="/Main.jsp"/>
+    <intercept-url pattern="/**/*.swf" />
+    <intercept-url pattern="/**/*.html" access="ROLE_USER"/>
+    <intercept-url pattern="/**" />
+  </http> -->
+  
+  <!-- <http auto-config="true">
+    <intercept-url pattern="Main.jsp" filters="none"/>
+    <intercept-url pattern="/**/*.swf" filters="none"/>
+    <intercept-url pattern="/**/*.html" access="ROLE_USER"/>
+    <intercept-url pattern="/**" filters="none"/>
+  </http> -->
+  
+  <!-- <global-method-security>
+    <protect-pointcut access="ROLE_ADMIN" 
+        expression="execution(* nl.gridshore.samples.books.business.*Manager.store*(..))"/>
+    <protect-pointcut access="ROLE_USER"
+        expression="execution(* nl.gridshore.samples.books.business.*Manager.obtain*(..))"/>
+  </global-method-security> -->
+
+  <!-- <authentication-manager>
+    <authentication-provider>
+      <user-service>
+      <user name="admin" password="admin" authorities="ROLE_USER, ROLE_ADMIN"/>
+      <user name="user" password="user" authorities="ROLE_USER"/>
+    </user-service>
+    </authentication-provider>
+  </authentication-manager> -->
+  
+  
+  <!-- <authentication-manager alias="authenticationManager">
+        <authentication-provider user-service-ref="jdbcUserService"/>
+  </authentication-manager> --> 
+
+</b:beans>

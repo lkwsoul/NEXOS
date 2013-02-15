@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMapConfig
+  PUBLIC "-//ibatis.apache.org//DTD SQL Map Config 2.0//EN"
+  "http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+  
+<sqlMapConfig>
+
+  <!-- 사용하는 properties -->
+  <properties resource="nexosframework/property/globals.properties"/>
+  
+  <settings   useStatementNamespaces="true" />
+  <!--
+  기본값으로 운영이 되도록 주석처리
+  <settings   useStatementNamespaces="true"
+              cacheModelsEnabled="true"
+              enhancementEnabled="false"
+              lazyLoadingEnabled="true"
+              defaultStatementTimeout="600"
+              />
+  -->
+  <!--
+    lazyLoadingEnabled      : 적재 지연 
+    cacheModelsEnabled      : 캐시 사용여부.
+    enhancementEnabled      : CGLIB사용여부(실행 시간에 코드를 생성하는 라이브러리(CGLIB))
+    useStatementNamespace   : SQL Map을 정의할 때 매핑 구분을 사용시 namespace(dot(.)로 구분하는 namespze)를 
+                              사용할지여부.
+    maxRequest              : 모든 SQL작업을 의미. 기본값(512)
+    maxSession              : Request < Session < Transaction 순의 의미내포.
+    maxTransactions         : DataBase Transaction을 의미.
+    
+  -->
+  
+  <!-- 사용 SqlMap 정의   -->
+  <!-- 파일명 규칙은 [destination name]_sqlmap.xml -->
+  <!-- WC(WMS COMMON SqlMap -->
+  <sqlMap     resource="nexosframework/sqlmap/query/${Globals.DbType}/wc_sqlmap.xml"/>
+  
+</sqlMapConfig>

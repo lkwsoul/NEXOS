@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap      
+    PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"      
+    "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<!--
+  ##############################################################################
+  ## 로그인 로그아웃 관련 SqlMap                                                                    
+  ## Author     : 이경우                                                      
+  ## Date       : 2012-11-15                                                     
+  ## Description
+  ## 로그인 로그아웃시 사용하는 쿼리맵
+  ## ※ 작성은 반드시 알페벳 순서로 작성해주세요
+  ## ※ 파일명은  [destination name]_sqlmap.xml 로 합니다
+  ## ※ namespace = destination name으로 설정합니다
+  ##############################################################################
+-->
+<sqlMap namespace="WC">
+
+  <!-- ##### GET_LOGIN ############################################# START ##-->
+  <!-- 로그인때 사용자 조회 ResultSet -->
+  <parameterMap class="java.util.Map" id="paramGET_LOGIN">
+    <parameter property="O_RTN"       mode="OUT"  javaType="java.sql.ResultSet" jdbcType="ORACLECURSOR"/>
+    <parameter property="P_USER_ID"   mode="IN" />
+  </parameterMap>
+  <procedure id="GET_LOGIN" parameterMap="paramGET_LOGIN" resultClass="java.util.HashMap">
+    { ? = call WC.GET_LOGIN(?) }
+  </procedure>
+  <!-- ##### GET_LOGIN ############################################### END ##-->
+  
+  <!-- ##### GET_CSUSERSYSINFO ##################################### START ##-->
+  <!-- 로그인 사용자 시스템부가정보 조회 ResultSet -->
+  <parameterMap class="java.util.Map" id="paramGET_CSUSERSYSINFO">
+    <parameter property="O_RTN"       mode="OUT"  javaType="java.sql.ResultSet" jdbcType="ORACLECURSOR"/>
+    <parameter property="P_USER_ID"   mode="IN" />
+    <parameter property="P_CLIENT_IP" mode="IN" />
+  </parameterMap>
+  <procedure id="GET_CSUSERSYSINFO" parameterMap="paramGET_CSUSERSYSINFO" resultClass="java.util.HashMap">
+    { ? = call WC.GET_CSUSERSYSINFO(?, ?) }
+  </procedure>
+  <!-- ##### GET_CSUSERSYSINFO ####################################### END ##-->
+  
+  
+  <insert id="INSERT_CSUSERSYSINFO" parameterClass="java.util.Map">
+    <![CDATA[
+      /*  로그인 기록 신규 생성 */
+      INSERT
+        INTO CSUSERSYSINFO
+             (
+		           USER_ID
+		          ,CLIENT_IP
+							,LOGIN_LAST_DATETIME         /* 로그인한 지난 일시   */
+							,LOGIN_FINAL_DATETIME        /* 로그인한 마지막 일시 */
+							,REG_USER_ID
+							,REG_DATETIME
+             )
+      VALUES (
+		           #P_USER_ID#
+              ,#P_CLIENT_IP#
+              ,SYSDATE
+              ,SYSDATE
+              ,#P_REG_USER_ID#
+              ,SYSDATE
+             ) 
+    ]]>
+  </insert>
+  
+  <update id="UPDATE_CSUSERSYSINFO_LOGIN" parameterClass="java.util.Map">
+    <![CDATA[
+      UPDATE CSUSERSYSINFO
+         SET LOGIN_LAST_DATETIME   = LOGIN_FINAL_DATETIME   /* 로그인한 지난일시는 현재 마지막일시로 수정 */
+            ,LOGIN_FINAL_DATETIME  = SYSDATE                /* 현재일시로 수정 */
+            ,REG_USER_ID           = #P_REG_USER_ID# 
+            ,REG_DATETIME          = SYSDATE
+       WHERE USER_ID               = #P_USER_ID#
+         AND CLIENT_IP             = #P_CLIENT_IP#
+    ]]>
+  </update>
+  
+  <!-- ##### GET_MENU ############################################## START ##-->
+  <!-- 매뉴정보 가져오기 ResultSet -->
+  <parameterMap class="java.util.Map" id="paramGET_MENU">
+    <parameter property="O_RTN"       mode="OUT"  javaType="java.sql.ResultSet" jdbcType="ORACLECURSOR"/>
+    <parameter property="P_USER_ID"   mode="IN" />
+  </parameterMap>
+  <procedure id="GET_MENU" parameterMap="paramGET_MENU" resultClass="java.util.HashMap">
+    { ? = call WC.GET_MENU(?) }
+  </procedure>
+  <!-- ##### GET_MENU ################################################ END ##-->
+      
+</sqlMap>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration PUBLIC "-//APACHE//DTD LOG4J 1.2//EN" "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+  <appender name="rolling" class="org.apache.log4j.RollingFileAppender"> 
+    <param name="MaxFileSize" value="100KB"/>
+  </appender> 
+  
+	<!-- Appenders -->
+  <appender name="WMS" class="org.apache.log4j.DailyRollingFileAppender">
+    <param name="Threshold"      value="ALL"   />
+    <param name="ImmediateFlush" value="true"  />
+    <param name="File"           value="${wms.webapp.root}WEB-INF/logs/wmslog.log" />
+    <param name="Append"         value="true"  />
+    <param name="DatePattern"    value="'.'yyyy-MM-dd"  />
+    <!-- <param name="encoding"       value="EUC-KR"  /> -->
+    <param name="encoding"       value="UTF-8"  />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss,SSS} [%-5p] [%c{2} %x] - %m%n" />
+    </layout>
+  </appender>
+  
+	<!-- Application Loggers -->
+	<logger name="nexosframework" additivity="false">
+		<level value="debug" />
+		<appender-ref ref="WMS" />
+	</logger>
+	
+	<!-- 3rdparty Loggers -->
+	<logger name="org.springframework.core" additivity="false">
+		<level value="info" />
+		<appender-ref ref="WMS" />
+	</logger>
+	
+	<logger name="org.springframework.beans" additivity="false">
+		<level value="info" />
+		<appender-ref ref="WMS" />
+	</logger>
+	
+	<logger name="org.springframework.context" additivity="false">
+		<level value="info" />
+		<appender-ref ref="WMS" />
+	</logger>
+
+	<logger name="org.springframework.web" additivity="false">
+		<level value="info" />
+		<appender-ref ref="WMS" />
+	</logger>
+	
+	  <logger name="java.sql" additivity="false">
+<!--     <level value="ERROR"    /> -->
+    <level value="debug"    />
+    <appender-ref ref="WMS" />
+  </logger>
+  
+  <logger name="java.sql.Connection" additivity="false">
+<!--     <level value="ERROR"    /> -->
+    <level value="debug"    />
+    <appender-ref ref="WMS" />
+  </logger>
+  
+  <logger name="java.sql.Statement" additivity="false">
+<!--     <level value="ERROR"    /> -->
+    <level value="debug"    />
+    <appender-ref ref="WMS" />
+  </logger>
+  
+  <logger name="java.sql.PreparedStatement" additivity="false">
+<!--     <level value="ERROR"    /> -->
+    <level value="debug"    />
+    <appender-ref ref="WMS" />
+  </logger>
+  
+  <logger name="java.sql.ResultSet" additivity="false">
+<!--     <level value="ERROR"    /> -->
+    <level value="debug"    />
+    <appender-ref ref="WMS" />
+  </logger>
+  
+  <logger name="com.ibatis" additivity="false">
+<!--     <level value="ERROR"    /> -->
+    <level value="debug"    />
+    <appender-ref ref="WMS" />
+  </logger>
+  
+  <logger name="com.ibatis.common.jdbc.SimpleDataSource" additivity="false">
+<!--     <level value="ERROR"    /> -->
+    <level value="debug"    />
+    <appender-ref ref="WMS" />
+  </logger>
+  
+  <logger name="com.ibatis.common.jdbc.ScriptRunner" additivity="false">
+<!--     <level value="ERROR"    /> -->
+    <level value="debug"    />
+    <appender-ref ref="WMS" />
+  </logger>
+  
+  <logger name="com.ibatis.sqlmap.engine.impl.SqlMapClientDelegate" additivity="false">
+<!--     <level value="ERROR"    /> -->
+    <level value="debug"    />
+    <appender-ref ref="WMS" />
+  </logger>
+
+	<!-- Root Logger -->
+	<root>
+		<priority value="debug" />
+		<appender-ref ref="WMS" />
+	</root>
+	
+</log4j:configuration>
