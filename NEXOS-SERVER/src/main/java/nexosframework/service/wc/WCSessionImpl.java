@@ -32,7 +32,6 @@ public class WCSessionImpl implements WCSession {
   /* (non-Javadoc)
    * @see nexosframework.service.wc.WCSession#authenticatePrincipal(org.springframework.context.ApplicationContext, java.lang.String, java.lang.String)
    */
-  @Override
   public void authenticatePrincipal(ApplicationContext appContext, String username, String password) {
     logger.info("[authenticatePrincipal START ##################################]");
     try{
